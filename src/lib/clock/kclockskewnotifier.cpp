@@ -1,0 +1,85 @@
+/*
+    Copyright (C) 2019 Vlad Zahorodnii <vladzzag@gmail.com>
+
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Library General Public
+    License version 2 as published by the Free Software Foundation.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Library General Public License for more details.
+
+    You should have received a copy of the GNU Library General Public License
+    along with this library; see the file COPYING.LIB.  If not, write to
+    the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+    Boston, MA 02110-1301, USA.
+*/
+
+#include "kclockskewnotifier.h"
+#include "kclockskewnotifierengine_p.h"
+
+class Q_DECL_HIDDEN KClockSkewNotifier::Private
+{
+public:
+    void loadNotifierEngine();
+    void unloadNotifierEngine();
+
+    KClockSkewNotifier *notifier = nullptr;
+    KClockSkewNotifierEngine *engine = nullptr;
+    bool isActive = false;
+};
+
+void KClockSkewNotifier::Private::loadNotifierEngine()
+{
+    engine = KClockSkewNotifierEngine::create(notifier);
+
+    if (engine) {
+        QObject::connect(engine, &KClockSkewNotifierEngine::skewed, notifier, &KClockSkewNotifier::skewed);
+    }
+}
+
+void KClockSkewNotifier::Private::unloadNotifierEngine()
+{
+    if (!engine) {
+        return;
+    }
+
+    QObject::disconnect(engine, &KClockSkewNotifierEngine::skewed, notifier, &KClockSkewNotifier::skewed);
+    engine->deleteLater();
+
+    engine = nullptr;
+}
+
+KClockSkewNotifier::KClockSkewNotifier(QObject *parent)
+    : QObject(parent)
+    , d(new Private)
+{
+    d->notifier = this;
+}
+
+KClockSkewNotifier::~KClockSkewNotifier()
+{
+}
+
+bool KClockSkewNotifier::isActive() const
+{
+    return d->isActive;
+}
+
+void KClockSkewNotifier::setActive(bool active)
+{
+    if (d->isActive == active) {
+        return;
+    }
+
+    d->isActive = active;
+
+    if (d->isActive) {
+        d->loadNotifierEngine();
+    } else {
+        d->unloadNotifierEngine();
+    }
+
+    emit activeChanged();
+}

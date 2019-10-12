@@ -63,9 +63,18 @@ if (UNIX)
     )
 endif ()
 
+if (CMAKE_SYSTEM_NAME MATCHES "Linux")
+    set(kcoreaddons_OPTIONAL_SRCS
+        ${kcoreaddons_OPTIONAL_SRCS}
+        clock/kclockskewnotifierengine_linux.cpp
+    )
+endif()
+
 set(libkcoreaddons_SRCS
     kaboutdata.cpp
     kcoreaddons.cpp
+    clock/kclockskewnotifier.cpp
+    clock/kclockskewnotifierengine.cpp
     io/kautosavefile.cpp
     io/kdirwatch.cpp
     io/kfilesystemtype.cpp
@@ -156,6 +165,11 @@ ecm_generate_headers(KCoreAddons_HEADERS
     REQUIRED_HEADERS KCoreAddons_HEADERS
 )
 ecm_generate_headers(KCoreAddons_HEADERS
+    HEADER_NAMES KClockSkewNotifier
+    RELATIVE clock
+    REQUIRED_HEADERS KCoreAddons_HEADERS
+)
+ecm_generate_headers(KCoreAddons_HEADERS
     HEADER_NAMES
         KAutoSaveFile
         KDirWatch
@@ -230,6 +244,7 @@ if (PythonModuleGeneration_FOUND)
       kaboutdata.h
       kcoreaddons.h
       caching/kshareddatacache.h
+      clock/kclockskewnotifier.h
       io/kautosavefile.h
       io/kdirwatch.h
       io/kmessage.h
